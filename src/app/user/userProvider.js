@@ -6,37 +6,69 @@ const baseResponse = require("../../../config/baseResponse");
 const {response} = require("../../../config/response");
 const {errResponse} = require("../../../config/response");
 const {connect} = require("http2");
+const nodemailer = require("nodemailer");
 
-exports.getUser = async function(Info){
-    try{
+// Provider: Read 비즈니스 로직 처리
+exports.idCheck = async function(id) {
+    const connection = await pool.getConnection(async (conn) => conn);
+    const idCheckResult = await userDao.selectUserId(connection, id);
+    connection.release();
+  
+    return idCheckResult;
+  }
 
-        const connection = await pool.getConnection(async (conn)=> conn);
+exports.nicknameCheck = async function(nickname){
+    const connection = await pool.getConnection(async (conn) => conn);
+    const nicknameCheckResult = await userDao.selectUserNickname(connection, nickname);
+    connection.release();
+  
+    return nicknameCheckResult;
+  }
 
-        const InfoResult = await userDao.getUserInfo(connection, Info);
-        console.log(`유저 조회 완료`);
-        connection.release();
+exports.passwordCheck = async function(selectUserPasswordParams) {
+    const connection = await pool.getConnection(async (conn) => conn);
+    const passwordCheckResult = await userDao.selectUserPassword(connection, selectUserPasswordParams);
+    connection.release();
+  
+    return passwordCheckResult;
+  }
 
-        return InfoResult;
-    }
-    catch(err){
-        logger.error(`App - editInfo Service error\n: ${err.message}`);
-        return errResponse(baseResponse.DB_ERROR);
-    }
-}
-exports.getuserNickname = async function(nickname){
-    try{
+exports.emailCheck = async function(email) {
+    const connection = await pool.getConnection(async (conn) => conn);
+    const emailCheckResult = await userDao.selectUserEmail(connection, email);
+    connection.release();
+  
+    return emailCheckResult;
+  }
 
-        const connection = await pool.getConnection(async (conn)=> conn);
+exports.accountCheck = async function(id){
+    const connection = await pool.getConnection(async (conn) => conn);
+    const userAccountResult = await userDao.selectUserAccount(connection, id);
+    connection.release();
+  
+    return userAccountResult;
+  }
 
-        const nicknameResult = await userDao.getnickname(connection, nickname);
-        console.log(`유저 조회 완료`);
-        console.log(nicknameResult);
-        connection.release();
 
-        return nicknameResult;
-    }
-    catch(err){
-        logger.error(`App - editInfo Service error\n: ${err.message}`);
-        return errResponse(baseResponse.DB_ERROR);
-    }
-}
+exports.sendMail = async (mailOptions) => {
+  // nodemailer 설정과 메일 발송
+  // 메일 서버 설정 (Gmail 예시)
+  const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+      user: 'himinsunsine@gmail.com', // 발송할 메일 계정
+      pass: 'nbgtywuuwqicmakj', // 발송할 메일 계정의 비밀번호
+    },
+  });
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Password reset email sent: ', mailOptions);
+  } catch (error) {
+    console.error('Error sending password reset email: ', error);
+    throw error;
+  }
+};
+
+
+
