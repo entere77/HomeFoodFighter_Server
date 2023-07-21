@@ -2,6 +2,7 @@ const recipeProvider = require("../../app/recipe/recipeProvider");
 const recipeService = require("../../app/recipe/recipeService");
 const baseResponse = require("../../../config/baseResponse");
 const { response, errResponse } = require("../../../config/response");
+const jwtMiddleware = require('../../../config/jwtMiddleware');
 
 
 /**
@@ -11,7 +12,7 @@ const { response, errResponse } = require("../../../config/response");
  */
 exports.PostRegisterReview = async function (req, res) {
     const recipe_id = req.params.recipe_id;
-    const userid = req.params.userid;
+    const userid = req.verifiedToken.userId;
     const star = req.body.star;
     const content = req.body.content;
 
@@ -34,10 +35,39 @@ exports.PostRegisterReview = async function (req, res) {
         }
     }
     const ReviewInfoResult = await recipeService.registerReview(Info);
-    return res.send(ReviewInfoResult);
+    return res.send(response(baseResponse.SUCCESS, ReviewInfoResult));
 
 };
 
+/**
+ * API No. 19
+ * API Name : 인기 레시피 조회
+ * [GET] /recipe/highest-star?limit=
+ */
+exports.GetRecipeHot = async function(req,res){
+    const limit = req.query.limit;
+
+    if(!limit){
+        const highestStar = await recipeProvider.getRecipeHot();
+        return res.send(response(baseResponse.SUCCESS, highestStar));
+    } else{
+        const highestStar = await recipeProvider.getRecipeHotLimit(limit);
+        return res.send(response(baseResponse.SUCCESS ,highestStar));
+    }
+};
+
+/**
+ * API No. 20
+ * API Name : 레시피 상세 페이지 조회
+ * [GET] /recipe/detail?recipe_id=
+ */
+exports.GetDetail= async function (req, res){
+    const recipe_id = req.query.recipe_id;
+
+    
+    const recipeResult = await recipeProvider.getDetail(recipe_id);
+    return res.send(response(baseResponse.SUCCESS, recipeResult));
+};
 
 
 /**

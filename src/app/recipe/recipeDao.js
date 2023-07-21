@@ -10,23 +10,68 @@ async function insertReview(connection, Info) {
     return userRows[0];
 }
 
+//API.15 인기 레시피 조회
+async function avgStar(connection){
+    const avgStarQuery = `
+    SELECT recipe_id, avg(star) FROM review GROUP BY recipe_id ORDER BY AVG(star) DESC;
+    `;
+    const [recipeRows] = await connection.query(avgStarQuery);
+    return recipeRows;
+}
+//상위 x개 인기 레시피 조회
+async function avgStarLimit(connection, limit){
+    const avgStarQuery = `
+    SELECT recipe_id, avg(star) FROM review GROUP BY recipe_id ORDER BY AVG(star) DESC LIMIT ${limit};
+    `;
+    const [recipeRows] = await connection.query(avgStarQuery);
+    return recipeRows;
+}
 
-module.exports = {
-    insertReview,
-    
-}; 
+
+//API.20 상세 레시피 조회
+//레시피 상세 정보 조회
+async function selectDetailInfo(connection, recipe_id){
+    const selectDetailQuery = `
+    select recipe_id, userid, recipe_name, cook_time, difficulty, img_url from Recipe where recipe_id=${recipe_id};
+    `;
+    const [recipeInfoRows] = await connection.query(selectDetailQuery);
+    return recipeInfoRows;
+}
+
+//레시피 과정 정보 조회
+async function selectDetailProcess(connection, recipe_id){
+    const selectDetailQuery = `
+    select cook_order, description, order_img_url from process where recipe_id = ${recipe_id};
+    `;
+    const [recipeProcessRows] = await connection.query(selectDetailQuery);
+    return recipeProcessRows;
+}
+
+//레시피의 재료 조회
+async function Detailingre(connection, recipe_id){
+    const detailingreQuery=`
+    select recipe_id, DetailIngredient.ingre_id, ingre_name from DetailIngredient join ingredient i on i.ingre_id = DetailIngredient.ingre_id where recipe_id = ${recipe_id};
+    `;
+    const [recipeingre]= await connection.query(detailingreQuery);
+    return recipeingre;
+}
+
+//레시피 존재 여부 조회
+async function CheckRecipeExistence(connection,recipe_id){
+    const recipeexistenceQuery = `
+    select recipe_id from Recipe where recipe_id= ${recipe_id};
+    `;
+    const recipe_existence = await connection.query(recipeexistenceQuery);
+    return recipe_existence[0];
+}
 
 //API.34 레시피 전체 조회
 async function allRecipeInquiry(connection) {
     const RecipeQuery = `
-    select * from Recipe
+    select * from Recipe;
     `; 
     const recipeRows = await connection.query(RecipeQuery);
     return recipeRows[0];
-}
-
-module.exports = {
-    allRecipeInquiry
 }
 
 
@@ -90,11 +135,6 @@ async function TypeRecipeInquiry(connection, RecipeType) {
 
 }
 
-
-module.exports = {
-    TypeRecipeInquiry,
-}; 
-
 //API.34 음식이름으로 레시피 조회
 async function FoodNameRecipeInquiry(connection, recipe_name){
     const FoodNameRecipeQuery = `
@@ -103,11 +143,20 @@ async function FoodNameRecipeInquiry(connection, recipe_name){
     const recipeRows = await connection.query(FoodNameRecipeQuery);
     return recipeRows[0];
 }
-
-module.exports ={
+module.exports = {
+    insertReview,
+    avgStar,
+    avgStarLimit,
+    selectDetailInfo,
+    selectDetailProcess,
+    insertReview,
+    allRecipeInquiry,
+    TypeRecipeInquiry,
     FoodNameRecipeInquiry,
     allRecipeInquiry,
-}
+    CheckRecipeExistence,
+    Detailingre,
+}; 
 
 /*API. 레시피 등록하기// 밑에 다시 확인하기 userRows
 async function InsertRecipe(connection, Info) {
