@@ -1,31 +1,23 @@
-exports.selectRefrigerator = async function (connection) {
+//API.22 냉장고 조회하기
+async function selectRefrigerator(connection) {
     const selectRefrigeratorQuery = `
-      SELECT *
-      FROM Refrigerator;
+      SELECT ingre_id, ingre_type
+      FROM refrigerator where userid = 2;
     `;
     const [rows] = await connection.query(selectRefrigeratorQuery);
     return rows;
-  };
-  
-  exports.insertRefrigeratorItem = async function (connection, itemInfo) {
-    const insertRefrigeratorItemQuery = `
-      INSERT INTO Refrigerator (itemName, quantity)
-      VALUES (?, ?);
-    `;
-    const insertRefrigeratorItemParams = [itemInfo.itemName, itemInfo.quantity];
-    await connection.query(insertRefrigeratorItemQuery, insertRefrigeratorItemParams);
-  };
-  
-  exports.deleteRefrigeratorItem = async function (connection, itemInfo) {
-    const deleteRefrigeratorItemQuery = `
-      DELETE FROM Refrigerator
-      WHERE itemName = ?;
-    `;
-    const deleteRefrigeratorItemParams = [itemInfo.itemName];
-    await connection.query(deleteRefrigeratorItemQuery, deleteRefrigeratorItemParams);
-  };
-  
+  }
+
+//API.23 냉장고 채우기
+async function insertRefrigerator(connection, arr) {
+  const insertRefrigeratorQuery = `
+    INSERT INTO refrigerator(userid, ingre_id, ingre_type) VALUES (${arr[0]}, ${arr[1]}, ${arr[2]});
+  `;
+  const rows = await connection.query(insertRefrigeratorQuery);
+  return rows[0];
+}
 
 module.exports = {
-    
+    selectRefrigerator,
+    insertRefrigerator
 };
