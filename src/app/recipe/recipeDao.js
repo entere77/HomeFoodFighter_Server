@@ -65,6 +65,33 @@ async function CheckRecipeExistence(connection,recipe_id){
     return recipe_existence[0];
 }
 
+//API.22 레시피 찜하기
+async function insertFavorite(connection, userid,recipe_id){
+    const insertFavoriteQuery = `
+    insert into FavoriteRecipes(userid,recipe_id) values(${userid}, ${recipe_id});
+    `;
+    const recipe_favorite = await connection.query(insertFavoriteQuery);
+    return recipe_favorite[0];
+}
+//찜여부 조회하기
+async function selectFavorite(connection, userid, recipe_id){
+    const selectFavoriteQuery = `
+    select id from FavoriteRecipes where userid=${userid} and recipe_id = ${recipe_id};
+    `;
+    const FavoriteRecipe_existence = await connection.query(selectFavoriteQuery);
+    return FavoriteRecipe_existence[0];
+}
+
+//API.25 가능한 레시피 조회
+async function possibleRecipeInquiry(connection, ids){
+    // info[12, 15]
+    const possibleRecipeQuery = `
+    SELECT* from Recipe where Recipe_id = (SELECT Recipe_id from DetailIngredient INNER JOIN refrigerator ON DetailIngredient.ingre_id = refrigerator.ingre_id where Detailingre_type = 1 AND DetailIngredient.ingre_id IN (${ids.map(id => '?').join(', ')} GROUP BY recipe_id));
+    `; 
+    const [recipeRows] = await connection.query(possibleRecipeQuery, ids);
+    return recipeRows;
+}
+
 //API.34 레시피 전체 조회
 async function allRecipeInquiry(connection) {
     const RecipeQuery = `
@@ -107,6 +134,9 @@ module.exports = {
     allRecipeInquiry,
     CheckRecipeExistence,
     Detailingre,
+    possibleRecipeInquiry,
+    insertFavorite,
+    selectFavorite,
 }; 
 
 /*API. 레시피 등록하기// 밑에 다시 확인하기 userRows

@@ -65,6 +65,19 @@ exports.FavoriteRecipe = async function (req, res) {
 
 
 /**
+ * API No. 10
+ * API Name : 내가 쓴 리뷰 조회 API
+ * [GET] /mypages/review
+ */
+exports.GetMyReviews = async function (req, res) {
+    const userid = req.verifiedToken.userId;
+
+    const myReviewResult = await mypageProvider.getReviews(userid);
+    return res.send(response(baseResponse.SUCCESS, myReviewResult));
+};
+
+
+/**
  * API No. 11
  * API Name : 내 레시피 조회 API
  * [GET] /mypages/myrecipe
@@ -72,8 +85,57 @@ exports.FavoriteRecipe = async function (req, res) {
 exports.GetMyRecipes = async function (req, res) {
     const userid = req.verifiedToken.userId;
 
-    const myRecipeResult = await mypageProvider.getMines(userid);
+    const myRecipeResult = await mypageProvider.getRecipes(userid);
     return res.send(response(baseResponse.SUCCESS, myRecipeResult));
 };
 
 
+/**
+ * API No. 12
+ * API Name : 회원 탈퇴 API
+ * [GET] /mypages/withdrawal
+ */
+exports.WithdrawalUser = async function (req, res) {
+    const userid = req.verifiedToken.userId;
+
+    const updateStateResponse = await mypageService.changeUserState(
+        userid,
+    );
+    return res.send(updateStateResponse);
+};
+
+
+// /**
+//  * API No. 
+//  * API Name : 로그아웃 API
+//  * [GET] /mypages/logout
+//  */
+// exports.LogoutUser = async function (req, res) {
+//     const token = req.headers['x-access-token'];
+//     if (!token) {
+//         return res.status(400).json({ error: '토큰이 전송되지 않았습니다.' });
+//     }
+
+//     // 쿠키를 삭제하여 로그아웃합니다.
+//     res.clearCookie('token');
+
+//     // 로그아웃 메시지를 응답합니다.
+//     return res.status(200).json({ message: '로그아웃되었습니다.' });
+// };
+
+
+/**
+ * API No. 1
+ * API Name: 로그아웃 API
+ * [GET] /mypages/logout
+ */
+exports.LogoutUser  = async function (req, res) {
+    // 클라이언트에게 전송된 토큰이 쿠키로 설정되어 있으면, 해당 쿠키를 삭제합니다.
+    if (req.cookies.token) {
+      res.clearCookie('token');
+    }
+  
+    // 로그아웃 메시지를 응답합니다.
+    return res.status(200).json({ message: '로그아웃되었습니다.' });
+  };
+  

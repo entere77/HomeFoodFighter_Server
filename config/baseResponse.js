@@ -37,13 +37,15 @@ module.exports = {
     CONTENT_EMPTY : { "isSuccess": false, "code": 2101, "message": "리뷰를 입력하세요"},
     STAR_CHECK1 : { "isSuccess": false, "code": 2102, "message": "별점이 0.5 미만입니다."},
     STAR_CHECK2 : { "isSuccess": false, "code": 2103, "message": "별점이 0.5 단위가 아닙니다."},
-
+    RECIPE_NAME_EMPTY : { "isSuccess": false, "code": 2104, "message": "정확한 레시피의 이름을 입력하세요."},
+    FAVORITE_EXISTENCE: { "isSuccess": false, "code": 2105, "message": "이미 찜한 레시피입니다."},
 
     TYPE_CHECK : {"isSucces":false, "code" : 2201, "messsage": "타입을 1이상 7이하의 값으로 입력해주세요."},
+    INGRE_CHECK : {"isSucces":false, "code" : 2202, "messsage": "재료가 선택되지 않았습니다 재료를 선택해 주세요"},
 
 
     // response error
-    SIGNIN_ID_WRONG : { "isSuccess": false, "code": 3001, "message": "아이디가 잘못 되었습니다." },
+    SIGNIN_ID_WRONG : { "isSuccess": false, "code": 3001, "message": "아이디 또는 비밀번호를 잘못 입력했습니다. 입력하신 내용을 다시 확인해주세요." },
     SIGNIN_PASSWORD_WRONG : { "isSuccess": false, "code": 3002, "message": "비밀번호가 잘못 되었습니다." },
     SIGNUP_REDUNDANT_ID : { "isSuccess": false, "code": 3003, "message":"중복된 아이디입니다." },
     SIGNUP_REDUNDANT_NICKNAME : { "isSuccess": false, "code": 3004, "message":"중복된 닉네임입니다." },

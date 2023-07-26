@@ -124,9 +124,35 @@ exports.checkDuplicateEmail = async function (req, res) {
  * API Name : 회원 가입 API
  * [POST] /users/signup
  */
-
 exports.postSignUp = async function (req, res) {
   const {id, password, check_password, nickname, name, birth, email, agreed_to_terms } = req.body; // agreed_to_terms도 추가해줘야함.
+
+   // 아이디 중복 확인 API 호출
+   try {
+    const idDuplicateResponse = await userService.checkDuplicateId(id);
+    if (idDuplicateResponse.isDuplicate)
+      return res.send(response(baseResponse.SIGNUP_DUPLICATED_ID));
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  // 닉네임 중복 확인 API 호출
+  try {
+    const nicknameDuplicateResponse = await userService.checkDuplicateNickname(nickname);
+    if (nicknameDuplicateResponse.isDuplicate)
+      return res.send(response(baseResponse.SIGNUP_DUPLICATED_NICKNAME));
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  // 이메일 중복 확인 API 호출
+  try {
+    const emailDuplicateResponse = await userService.checkDuplicateEmail(email);
+    if (emailDuplicateResponse.isDuplicate)
+      return res.send(response(baseResponse.SIGNUP_DUPLICATED_EMAIL));
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 
   // 빈 값이 되면 안되는 속성값 체크
   if (!id)
@@ -162,34 +188,6 @@ exports.postSignUp = async function (req, res) {
   else if (!validateEmail(email))
       return res.send(response(baseResponse.SIGNUP_EMAIL_ERROR));
 
-
-   // 아이디 중복 확인 API 호출
-   try {
-    const idDuplicateResponse = await userService.checkDuplicateId(id);
-    if (idDuplicateResponse.isDuplicate)
-      return res.send(response(baseResponse.SIGNUP_DUPLICATED_ID));
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-
-  // 닉네임 중복 확인 API 호출
-  try {
-    const nicknameDuplicateResponse = await userService.checkDuplicateNickname(nickname);
-    if (nicknameDuplicateResponse.isDuplicate)
-      return res.send(response(baseResponse.SIGNUP_DUPLICATED_NICKNAME));
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-
-  // 이메일 중복 확인 API 호출
-  try {
-    const emailDuplicateResponse = await userService.checkDuplicateEmail(email);
-    if (emailDuplicateResponse.isDuplicate)
-      return res.send(response(baseResponse.SIGNUP_DUPLICATED_EMAIL));
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-
   const signUpResponse = await userService.createUser(
     id, password, nickname, name, birth, email
   );
@@ -197,19 +195,48 @@ exports.postSignUp = async function (req, res) {
   return res.send(signUpResponse);
 }
 
+
 /**
  * API No. 1
- * API Name : 로그인
+ * API Name: 로그인
  * [POST] /users/login
  * id, password
  */
 exports.login = async function (req, res) {
-  const {id, password} = req.body;
+  const { id, password } = req.body;
 
+  // userProvider를 통해 id로 유저 정보 가져오기
+  const user = await userProvider.getUserById(id);
+
+  // 유저 정보가 없는 경우
+  if (!user) {
+    return res.status(404).json({ error: '아이디 또는 비밀번호를 잘못 입력했습니다. 입력하신 내용을 다시 확인해주세요.' });
+  }
+
+  const user_state = await userProvider.getStateById(id);
+  const stateValues = user_state.map((item) => item.state);
+  console.log(stateValues[0]);
+
+  // 유저의 state가 0인 경우 (로그인 차단)
+  if (stateValues[0] === 0) {
+    return res.status(403).json({ error: '해당 유저는 탈퇴 완료된 유저입니다.' });
+  }
+
+  // userService를 통해 로그인 로직 처리
   const signInResponse = await userService.postSignIn(id, password);
 
+
+  // JWT 토큰을 응답으로 받은 후, 쿠키로 설정하여 클라이언트에게 보냅니다.
+  res.cookie('token', signInResponse.jwt, {
+    maxAge: 3600000, // 쿠키의 만료 시간을 밀리초 단위로 설정합니다 (1시간)
+    httpOnly: true, // 클라이언트 측 JavaScript에서 쿠키에 접근하지 못하도록 합니다
+    // 필요에 따라 secure와 sameSite 같은 다른 쿠키 옵션도 설정할 수 있습니다
+  });
+
   return res.send(signInResponse);
-}
+};
+
+
 
 /**
  * API No. 3

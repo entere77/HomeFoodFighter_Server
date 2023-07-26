@@ -8,7 +8,7 @@ const jwtMiddleware = require('../../../config/jwtMiddleware');
 /**
  * API No. 15
  * API Name : 레시피의 리뷰(후기) 등록
- * [POST] /recipe/:recipe_id/review/:userid
+ * [POST] /recipe/review/:recipe_id
  */
 exports.PostRegisterReview = async function (req, res) {
     const recipe_id = req.params.recipe_id;
@@ -35,7 +35,7 @@ exports.PostRegisterReview = async function (req, res) {
         }
     }
     const ReviewInfoResult = await recipeService.registerReview(Info);
-    return res.send(response(baseResponse.SUCCESS, ReviewInfoResult));
+    return res.send(ReviewInfoResult);
 
 };
 
@@ -49,10 +49,10 @@ exports.GetRecipeHot = async function(req,res){
 
     if(!limit){
         const highestStar = await recipeProvider.getRecipeHot();
-        return res.send(response(baseResponse.SUCCESS, highestStar));
+        return res.send(highestStar);
     } else{
         const highestStar = await recipeProvider.getRecipeHotLimit(limit);
-        return res.send(response(baseResponse.SUCCESS ,highestStar));
+        return res.send(highestStar);
     }
 };
 
@@ -67,23 +67,39 @@ exports.GetDetail= async function (req, res){
 
     
     const recipeResult = await recipeProvider.getDetail(recipe_id);
-    return res.send(response(baseResponse.SUCCESS, recipeResult));
+    return res.send(recipeResult);
+};
+
+/**
+ * API No. 21 
+ * API Name : 레시피 찜하기
+ * [POST] /recipe/favorite/:recipe_id
+ */
+exports.Postfavorite = async function (req,res){
+    const userid = req.verifiedToken.userId;
+    const recipe_id = req.params.recipe_id;
+    
+    const favoriteResult = await recipeService.favoriteRecipe(userid,recipe_id);
+    return res.send(favoriteResult);
 };
 
 /**
  * API No. 25
  * API Name : 가능한 레시피 조회 API
  * [GET] /refrigerator/possible
+ * query string을 이용해 recipe/possible?ids = 22,23,24 이런식으로 들어올경우 ,로 구분하여 배열생성
  */
 exports.possibleRecipe = async function (req, res) {
-    const userid = req.verifiedToken.userId;
-    const ingre_id = req.body.ingre_id;
-    const ingre_type = req.params.ingre_type;
-    
-    const arr = [userid, ingre_id, ingre_type];
+    const ids = req.query.ids.split(',');
+    console.log(ids);
+    if(ids.length > 0){
+        const recipeResult = await recipeProvider.getpossible(ids);
+        return res.send(response(baseResponse.SUCCESS, recipeResult));
+    }
 
-    const FillResult = await refrigeratorService.fillRefrigerator(arr);
-    return res.send(response(baseResponse.SUCCESS, FillResult));
+    else{
+        return res.send(baseResponse.INGRE_CHECK);
+    }
 };
 
 

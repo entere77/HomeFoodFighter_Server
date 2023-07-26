@@ -7,13 +7,14 @@ const baseResponse = require("../../../config/baseResponse");
 const {response} = require("../../../config/response");
 const {errResponse} = require("../../../config/response");
 const jwtMiddleware = require('../../../config/jwtMiddleware');
+
 //19. 인기 레시피 조회 (모두 출력)
 exports.getRecipeHot = async function(){
     try{
         const connection = await pool.getConnection(async (conn)=>conn);
         const recipeHot = await recipeDao.avgStar(connection);
         connection.release();
-        return recipeHot;
+        return response(baseResponse.SUCCESS,recipeHot);
 
     }
     catch(err){
@@ -27,7 +28,7 @@ exports.getRecipeHotLimit = async function(limit){
         const connection = await pool.getConnection(async (conn)=>conn);
         const recipeHot = await recipeDao.avgStarLimit(connection,limit);
         connection.release();
-        return recipeHot;
+        return response(baseResponse.SUCCESS,recipeHot);
 
     }
     catch(err){
@@ -50,7 +51,7 @@ exports.getDetail = async function(recipe_id){
             connection.release();
 
             recipeInfo=[recipeInfoResult, recipeProcessResult, recipeIngreResult];
-            return recipeInfo;
+            return response(baseResponse.SUCCESS,recipeInfo);
         }
 
         
@@ -60,6 +61,26 @@ exports.getDetail = async function(recipe_id){
         return errResponse(baseResponse.DB_ERROR);
     }
 }
+
+//25. 가능한 레시피 조회
+exports.getpossible = async function(ids){
+    try{
+        const connection = await pool.getConnection(async (conn)=> conn);
+
+        const inquiryResult = await recipeDao.possibleRecipeInquiry(connection,ids);
+        console.log(`레시피 검색 완료`);
+        console.log(inquiryResult);
+        connection.release();
+
+        return response(baseResponse.SUCCESS, inquiryResult);
+    }
+    catch(err){
+        logger.error(`App - Service error\n: ${err.message}`);
+        return errResponse(baseResponse.DB_ERROR);
+    }
+
+}
+
 
 //34. 전체레시피 조회
 exports.allRecipe = async function(){
@@ -96,7 +117,7 @@ exports.TypeRecipe = async function(RecipeType){
     }
 }
 
-//39. 음식이름으로 레시피 조회
+//35. 음식이름으로 레시피 조회
 exports.FoodNameRecipe = async function(recipe_name){
     try{
         const connection = await pool.getConnection(async (conn)=> conn);
