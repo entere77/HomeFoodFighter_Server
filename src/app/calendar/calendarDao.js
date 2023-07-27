@@ -10,6 +10,20 @@ async function getWeek(connection, userid, date) {
     return weekRows;
 };
 
+//API.17 찜에서 추가하기
+async function insertCalendarFavorites(connection, Info) {
+    
+    const insertCalendarFavoritesQuery = `
+    INSERT INTO Calendar (userid, recipe_id, bydate, meal_time, name)
+    SELECT FR.userid, FR.recipe_id, '${Info[1]}', 2, R.recipe_name
+    FROM FavoriteRecipes FR
+    JOIN Recipe R ON FR.recipe_id = R.recipe_id
+    WHERE FR.userid = ${Info[0]} AND FR.recipe_id IN (${Info[2]});
+    `;
+    const CalendarFavoritesRows = await connection.query(insertCalendarFavoritesQuery);
+    return CalendarFavoritesRows;
+};
+
 //API.18 캘린더에서 직접 추가하기
 async function insertRecipe(connection, userid, name, date, meal_time) {
     
@@ -23,4 +37,5 @@ async function insertRecipe(connection, userid, name, date, meal_time) {
 module.exports={
     getWeek,
     insertRecipe,
+    insertCalendarFavorites,
 }
