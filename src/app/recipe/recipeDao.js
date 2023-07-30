@@ -32,6 +32,14 @@ async function avgStarLimit(connection, limit){
     return recipeRows;
 }
 
+//API.19 레시피 찜 취소하기
+async function deleteFavorite(connection, userid,recipe_id){
+    const insertFavoriteQuery = `
+    delete from FavoriteRecipes where userid= ${userid} and recipe_id =${recipe_id};
+    `;
+    const recipe_favorite = await connection.query(insertFavoriteQuery);
+    return recipe_favorite[0];
+}
 
 //API.20 상세 레시피 조회
 //레시피 상세 정보 조회
@@ -89,18 +97,32 @@ async function selectFavorite(connection, userid, recipe_id){
 
 //API.25 가능한 레시피 조회
 async function possibleRecipeInquiry(connection, ids){
-    // info[12, 15]
+    const length_ids = ids.length;
     const possibleRecipeQuery = `
-    SELECT* from Recipe where Recipe_id = (SELECT Recipe_id from DetailIngredient INNER JOIN refrigerator ON DetailIngredient.ingre_id = refrigerator.ingre_id where Detailingre_type = 1 AND DetailIngredient.ingre_id IN (${ids.map(id => '?').join(', ')} GROUP BY recipe_id));
+    SELECT U.name as user_name, R.recipe_name, R.summary, R.img_url,
+    (SELECT COUNT(*) FROM review V WHERE R.recipe_id = V.recipe_id) AS review_count,
+    (SELECT AVG(star) FROM review V WHERE R.recipe_id = V.recipe_id) AS average_rating
+    FROM Recipe R LEFT JOIN User U ON R.userid = U.userid
+    where recipe_id in 
+    (SELECT recipe_id FROM DetailIngredient AS A WHERE ingre_id IN (${ids.map(id => '?').join(', ')}) 
+    AND Detailingre_type = 1 GROUP BY recipe_id 
+    HAVING ${length_ids} >= (SELECT SUM(CASE WHEN Detailingre_type = 1 THEN 1 ELSE 0 END) 
+    FROM DetailIngredient AS B WHERE A.recipe_id = B.recipe_id) AND NOT EXISTS 
+    (SELECT 1 FROM DetailIngredient AS C WHERE A.recipe_id = C.recipe_id AND ingre_id not in (${ids.map(id => '?').join(', ')}) 
+    AND Detailingre_type = 1));
     `; 
-    const [recipeRows] = await connection.query(possibleRecipeQuery, ids);
+    const [recipeRows] = await connection.query(possibleRecipeQuery, ids.concat(ids));
     return recipeRows;
 }
 
 //API.34 레시피 전체 조회
 async function allRecipeInquiry(connection) {
     const RecipeQuery = `
-    select * from Recipe;
+    SELECT U.name as user_name, R.recipe_name, R.summary, R.img_url,
+    (SELECT COUNT(*) FROM review V WHERE R.recipe_id = V.recipe_id) AS review_count,
+    (SELECT AVG(star) FROM review V WHERE R.recipe_id = V.recipe_id) AS average_rating
+    FROM Recipe R
+    LEFT JOIN User U ON R.userid = U.userid;
     `; 
     const recipeRows = await connection.query(RecipeQuery);
     return recipeRows[0];
@@ -111,17 +133,27 @@ async function allRecipeInquiry(connection) {
 async function TypeRecipeInquiry(connection, RecipeType) {
 
     const KoreaRecipeQuery = `
-    select * from Recipe where type_class = '${RecipeType}';
+    SELECT U.name as user_name, R.recipe_name, R.summary, R.img_url,
+    (SELECT COUNT(*) FROM review V WHERE R.recipe_id = V.recipe_id) AS review_count,
+    (SELECT AVG(star) FROM review V WHERE R.recipe_id = V.recipe_id) AS average_rating
+    FROM Recipe R
+    where R.type_class = ${RecipeType}
+    LEFT JOIN User U ON R.userid = U.userid;
     `; 
     const [recipeRows] = await connection.query(KoreaRecipeQuery);
     return recipeRows;
     }
 
 
-//API.34 음식이름으로 레시피 조회
+//API.35 음식이름으로 레시피 조회
 async function FoodNameRecipeInquiry(connection, recipe_name){
     const FoodNameRecipeQuery = `
-    select * from Recipe where recipe_name LIKE concat('%','${recipe_name}','%');
+    SELECT U.name as user_name, R.recipe_name, R.summary, R.img_url,
+    (SELECT COUNT(*) FROM review V WHERE R.recipe_id = V.recipe_id) AS review_count,
+    (SELECT AVG(star) FROM review V WHERE R.recipe_id = V.recipe_id) AS average_rating
+    FROM Recipe R
+    where recipe_name LIKE concat('%','${recipe_name}','%')
+    LEFT JOIN User U ON R.userid = U.userid;
     `; 
     const [recipeRows] = await connection.query(FoodNameRecipeQuery);
     return recipeRows;
@@ -142,6 +174,7 @@ module.exports = {
     possibleRecipeInquiry,
     insertFavorite,
     selectFavorite,
+    deleteFavorite,
 }; 
 
 /*API. 레시피 등록하기// 밑에 다시 확인하기 userRows

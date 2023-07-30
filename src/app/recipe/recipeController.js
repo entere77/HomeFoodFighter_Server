@@ -57,6 +57,19 @@ exports.GetRecipeHot = async function(req,res){
 };
 
 /**
+ * API No. 19
+ * API Name : 레시피 찜 취소하기
+ * [POST] /recipe/favorite/delete/:recipe_id
+ */
+exports.Deletefavorite = async function (req,res){
+    const userid = req.verifiedToken.userId;
+    const recipe_id = req.params.recipe_id;
+    
+    const favoriteResult = await recipeService.DeletefavoriteRecipe(userid,recipe_id);
+    return res.send(favoriteResult);
+};
+
+/**
  * API No. 20
  * API Name : 레시피 상세 페이지 조회
  * [GET] /recipe/detail?recipe_id=
@@ -91,14 +104,12 @@ exports.Postfavorite = async function (req,res){
  */
 exports.possibleRecipe = async function (req, res) {
     const ids = req.query.ids.split(',');
-    console.log(ids);
-    if(ids.length > 0){
-        const recipeResult = await recipeProvider.getpossible(ids);
-        return res.send(response(baseResponse.SUCCESS, recipeResult));
-    }
-
-    else{
+    if (ids.length === 1 && ids[0] === ''){
         return res.send(baseResponse.INGRE_CHECK);
+    }
+    else{
+        const recipeResult = await recipeProvider.getpossible(ids);
+        return res.send(recipeResult);
     }
 };
 
@@ -110,7 +121,6 @@ exports.possibleRecipe = async function (req, res) {
  */
 exports.GetallRecipe = async function (req, res) {
     const RecipeType = req.query.type;
-    console.log(RecipeType);
     if(!RecipeType){
         const allRecipeResult = await recipeProvider.allRecipe();
         return res.send(allRecipeResult);
