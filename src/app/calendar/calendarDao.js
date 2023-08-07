@@ -4,7 +4,7 @@ const baseResponse = require("../../../config/baseResponse");
 async function getWeek(connection, userid, date) {
     
     const getWeekQuery = `
-    SELECT userid, recipe_id, DATE_FORMAT(bydate, '%Y-%m-%d'), meal_time, name FROM Calendar WHERE userid = ${userid} AND WEEK(bydate, 1) = WEEK('${date}', 1);
+    SELECT userid, recipe_id, DATE_FORMAT(bydate, '%Y-%m-%d') as bydate, meal_time, name FROM Calendar WHERE userid = ${userid} AND WEEK(bydate, 1) = WEEK('${date}', 1);
     `;
     const [weekRows] = await connection.query(getWeekQuery);
     return weekRows;
@@ -15,7 +15,7 @@ async function insertCalendarFavorites(connection, Info) {
     
     const insertCalendarFavoritesQuery = `
     INSERT INTO Calendar (userid, recipe_id, bydate, meal_time, name)
-    SELECT FR.userid, FR.recipe_id, '${Info[1]}', 2, R.recipe_name
+    SELECT FR.userid, FR.recipe_id, '${Info[1]}', ${Info[3]}, R.recipe_name
     FROM FavoriteRecipes FR
     JOIN Recipe R ON FR.recipe_id = R.recipe_id
     WHERE FR.userid = ${Info[0]} AND FR.recipe_id =${Info[2]};
@@ -34,8 +34,19 @@ async function insertRecipe(connection, userid, name, date, meal_time) {
     return weekRows;
 };
 
+//API.29 캘린더에서 레시피 삭제
+async function deleteCalendarWeek(connection, Info) {
+//쿼리문짜기    
+    const deleteWeekQuery = `
+    DELETE FROM Calendar WHERE user_id = ? AND date = ? AND meal_time = ?;
+    `;
+    const weekRemoveRows = await connection.query(deleteWeekQuery,Info);
+    return weekRemoveRows;
+};
+
 module.exports={
     getWeek,
     insertRecipe,
     insertCalendarFavorites,
+    deleteCalendarWeek,
 }

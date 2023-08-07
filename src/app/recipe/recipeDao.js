@@ -45,7 +45,8 @@ async function deleteFavorite(connection, userid,recipe_id){
 //레시피 상세 정보 조회
 async function selectDetailInfo(connection, recipe_id){
     const selectDetailQuery = `
-    select recipe_id, userid, recipe_name, cook_time, difficulty, img_url from Recipe where recipe_id=${recipe_id};
+    select recipe_id, U.userid, U.image as user_img_url, nickname, recipe_name, cook_time, difficulty, img_url, quantity from Recipe join User U on Recipe.userid = U.userid where recipe_id=${recipe_id};
+
     `;
     const [recipeInfoRows] = await connection.query(selectDetailQuery);
     return recipeInfoRows;
@@ -63,7 +64,7 @@ async function selectDetailProcess(connection, recipe_id){
 //레시피의 재료 조회
 async function Detailingre(connection, recipe_id){
     const detailingreQuery=`
-    select recipe_id, DetailIngre_type, ingre_name, amount from DetailIngredient join ingredient i on i.ingre_id = DetailIngredient.ingre_id where recipe_id = ${recipe_id};
+    select recipe_id, DetailIngre_type, ingre_name, ingre_english, amount from DetailIngredient join ingredient i on i.ingre_id = DetailIngredient.ingre_id where recipe_id = ${recipe_id};
     `;
     const [recipeingre]= await connection.query(detailingreQuery);
     return recipeingre;
@@ -100,14 +101,14 @@ async function possibleRecipeInquiry(connection, ingredient_id){
     const length_ingredient_id = ingredient_id.length;
     const possibleRecipeQuery = `
     SELECT
-    U.name AS user_name,
+    U.name,
     R.recipe_name,
     R.summary,
     R.img_url,
     R.type_class,
     R.recipe_id,
     COUNT(V.review_id) AS review_count,
-    AVG(V.star) AS average_rating
+    AVG(V.star) AS star
 FROM Recipe R
 LEFT JOIN User U ON R.userid = U.userid
 LEFT JOIN review V ON R.recipe_id = V.recipe_id
@@ -150,7 +151,7 @@ async function allRecipeInquiry(connection) {
     const RecipeQuery = `
     SELECT U.name as user_name, R.recipe_name, R.summary, R.img_url, R.type_class, R.recipe_id,
     (SELECT COUNT(*) FROM review V WHERE R.recipe_id = V.recipe_id) AS review_count,
-    (SELECT AVG(star) FROM review V WHERE R.recipe_id = V.recipe_id) AS average_rating
+    (SELECT AVG(star) FROM review V WHERE R.recipe_id = V.recipe_id) AS star
     FROM Recipe R
     LEFT JOIN User U ON R.userid = U.userid;
     `; 
@@ -166,7 +167,7 @@ async function TypeRecipeInquiry(connection, RecipeType) {
 
     SELECT U.name as user_name, R.recipe_name, R.summary, R.img_url, R.type_class, R.recipe_id,
     (SELECT COUNT(*) FROM review V WHERE R.recipe_id = V.recipe_id) AS review_count,
-    (SELECT AVG(star) FROM review V WHERE R.recipe_id = V.recipe_id) AS average_rating
+    (SELECT AVG(star) FROM review V WHERE R.recipe_id = V.recipe_id) AS star
     FROM Recipe R
     LEFT JOIN User U ON R.userid = U.userid
     where R.type_class = ${RecipeType};
@@ -181,7 +182,7 @@ async function FoodNameRecipeInquiry(connection, recipe_name){
     const FoodNameRecipeQuery = `
     SELECT U.name as user_name, R.recipe_name, R.summary, R.img_url, R.type_class, R.recipe_id,
     (SELECT COUNT(*) FROM review V WHERE R.recipe_id = V.recipe_id) AS review_count,
-    (SELECT AVG(star) FROM review V WHERE R.recipe_id = V.recipe_id) AS average_rating
+    (SELECT AVG(star) FROM review V WHERE R.recipe_id = V.recipe_id) AS star
     FROM Recipe R
     LEFT JOIN User U ON R.userid = U.userid
     where recipe_name LIKE concat('%','${recipe_name}','%');
