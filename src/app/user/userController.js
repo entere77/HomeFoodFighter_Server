@@ -272,3 +272,19 @@ exports.finding = async function (req, res) {
 
   return res.send(findingResponse);
 }
+
+
+/**
+ * API name : kakao 로그인
+ * [POST] /
+ */
+exports.signInKakao = async function (req, res) {
+ // const headers = req.headers["authorization"];
+  //const kakaoToken = headers.split(" ")[1];
+  const kakaoToken = 'F8zmOqsSz4ogClrhKM5r6nmFR8x3a_EfIuOFIPYYCj11GgAAAYndy1in';
+
+  const accessToken = await userService.signInKakaotoken(kakaoToken);
+  
+  return res.status(200).json({ accessToken: accessToken });
+};
+
